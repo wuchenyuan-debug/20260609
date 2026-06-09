@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>番茄鐘 · Pomodoro</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0f0e0d;
+    --surface: #1a1917;
+    --text: #f0ede8;
+    --text-dim: #7d7870;
+    --red: #e54b3a;
+    --red-dim: rgba(229,75,58,0.15);
+    --red-glow: rgba(229,75,58,0.25);
+    --green: #3ac47a;
+    --green-dim: rgba(58,196,122,0.15);
+    --green-glow: rgba(58,196,122,0.25);
+    --radius: 20px;
+    --ring-bg: #252220;
+  }
+
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    user-select: none;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    text-align: center;
+    padding: 40px 24px;
+    width: 100%;
+    max-width: 640px;
+  }
+
+  /* 頂部狀態與統計 */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 48px;
+    padding: 0 8px;
+  }
+
+  .status-badge {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 8px 20px;
+    border-radius: 60px;
+    transition: all 0.4s ease;
+  }
+
+  .status-badge.work {
+    background: var(--red-dim);
+    color: var(--red);
+  }
+
+  .status-badge.break {
+    background: var(--green-dim);
+    color: var(--green);
+  }
+
+  .session-info {
+    text-align: right;
+  }
+
+  .session-count {
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .session-label {
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  /* 進度環 + 倒數 */
+  .ring-wrapper {
+    position: relative;
+    width: 340px;
+    height: 340px;
+    margin: 0 auto 32px;
+  }
+
+  .ring-wrapper svg {
+    transform: rotate(-90deg);
+    width: 100%;
+    height: 100%;
+  }
+
+  .ring-bg {
+    fill: none;
+    stroke: var(--ring-bg);
+    stroke-width: 6;
+  }
+
+  .ring-progress {
+    fill: none;
+    stroke-width: 6;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+                stroke 0.4s ease;
+  }
+
+  .ring-progress.work { stroke: var(--red); }
+  .ring-progress.break { stroke: var(--green); }
+
+  .timer-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .timer {
+    font-size: 88px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    transition: color 0.4s ease;
+  }
+
+  .timer.work { color: var(--red); }
+  .timer.break { color: var(--green); }
+
+  .timer-sub {
+    font-size: 14px;
+    color: var(--text-dim);
+    letter-spacing: 1.5px;
+    margin-top: 8px;
+  }
+
+  /* 按鈕 */
+  .controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+
+  .btn {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border: none;
+    border-radius: 60px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-main {
+    padding: 18px 56px;
+    font-size: 18px;
+    border-radius: 60px;
+    transition: all 0.25s ease;
+    position: relative;
+  }
+
+  .btn-main.work {
+    background: var(--red);
+    color: #fff;
+    box-shadow: 0 0 40px var(--red-glow);
+  }
+
+  .btn-main.work:hover {
+    background: #d04030;
+    box-shadow: 0 0 60px var(--red-glow);
+    transform: scale(1.02);
+  }
+
+  .btn-main.break {
+    background: var(--green);
+    color: #fff;
+    box-shadow: 0 0 40px var(--green-glow);
+  }
+
+  .btn-main.break:hover {
+    background: #2fb06c;
+    box-shadow: 0 0 60px var(--green-glow);
+    transform: scale(1.02);
+  }
+
+  .btn-main:active { transform: scale(0.98) !important; }
+
+  .btn-secondary {
+    padding: 14px 28px;
+    font-size: 14px;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--ring-bg);
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--text-dim);
+    background: #22201d;
+  }
+
+  .btn-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--ring-bg);
+  }
+
+  .btn-icon:hover {
+    border-color: var(--text-dim);
+    background: #22201d;
+  }
+
+  /* 自訂設定 */
+  .settings-panel {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    max-width: 440px;
+    margin: 0 auto;
+    border: 1px solid var(--ring-bg);
+  }
+
+  .settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .settings-row + .settings-row { margin-top: 16px; }
+
+  .settings-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+    min-width: 80px;
+    text-align: left;
+  }
+
+  .settings-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .settings-control button {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--ring-bg);
+    background: transparent;
+    color: var(--text);
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+
+  .settings-control button:hover {
+    border-color: var(--text-dim);
+    background: #2a2825;
+  }
+
+  .settings-control .value {
+    font-size: 18px;
+    font-weight: 600;
+    min-width: 48px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .settings-control .unit {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-left: 2px;
+  }
+
+  /* Responsive */
+  @media (max-width: 560px) {
+    .container { padding: 24px 16px; }
+    .header { margin-bottom: 32px; }
+    .ring-wrapper { width: 260px; height: 260px; }
+    .timer { font-size: 64px; }
+    .btn-main { padding: 16px 40px; font-size: 16px; }
+    .settings-panel { padding: 20px; }
+  }
+
+  @media (max-width: 380px) {
+    .ring-wrapper { width: 220px; height: 220px; }
+    .timer { font-size: 52px; }
+    .status-badge { font-size: 12px; padding: 6px 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container" role="main">
+  <!-- 頂部 -->
+  <div class="header">
+    <div class="status-badge work" id="statusBadge">專注中</div>
+    <div class="session-info">
+      <div class="session-count" id="sessionCount">0</div>
+      <div class="session-label">今日完成</div>
+    </div>
+  </div>
+
+  <!-- 計時器 -->
+  <div class="ring-wrapper">
+    <svg viewBox="0 0 340 340">
+      <circle class="ring-bg" cx="170" cy="170" r="150"/>
+      <circle class="ring-progress work" id="progressRing" cx="170" cy="170" r="150"
+        stroke-dasharray="942.48" stroke-dashoffset="0"/>
+    </svg>
+    <div class="timer-center">
+      <div class="timer work" id="timerDisplay">25:00</div>
+      <div class="timer-sub" id="timerSub">25 分鐘 · 專注</div>
+    </div>
+  </div>
+
+  <!-- 按鈕 -->
+  <div class="controls">
+    <button class="btn btn-secondary" id="resetBtn" title="重置">↺</button>
+    <button class="btn btn-main work" id="mainBtn">開始</button>
+    <button class="btn btn-icon" id="settingsToggle" title="設定">⚙</button>
+  </div>
+
+  <!-- 設定面板 -->
+  <div class="settings-panel" id="settingsPanel" style="display:none">
+    <div class="settings-row">
+      <span class="settings-label">工作</span>
+      <div class="settings-control">
+        <button id="workDec">−</button>
+        <span class="value" id="workValue">25</span>
+        <span class="unit">分鐘</span>
+        <button id="workInc">+</button>
+      </div>
+    </div>
+    <div class="settings-row">
+      <span class="settings-label">休息</span>
+      <div class="settings-control">
+        <button id="breakDec">−</button>
+        <span class="value" id="breakValue">5</span>
+        <span class="unit">分鐘</span>
+        <button id="breakInc">+</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const CIRCUMFERENCE = 2 * Math.PI * 150;
+
+  // DOM
+  const timerDisplay = document.getElementById('timerDisplay');
+  const timerSub = document.getElementById('timerSub');
+  const statusBadge = document.getElementById('statusBadge');
+  const progressRing = document.getElementById('progressRing');
+  const mainBtn = document.getElementById('mainBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const settingsToggle = document.getElementById('settingsToggle');
+  const settingsPanel = document.getElementById('settingsPanel');
+  const sessionCountEl = document.getElementById('sessionCount');
+  const workValue = document.getElementById('workValue');
+  const breakValue = document.getElementById('breakValue');
+  const workInc = document.getElementById('workInc');
+  const workDec = document.getElementById('workDec');
+  const breakInc = document.getElementById('breakInc');
+  const breakDec = document.getElementById('breakDec');
+
+  // 狀態
+  let workMinutes = 25;
+  let breakMinutes = 5;
+  let totalSeconds = workMinutes * 60;
+  let timeLeft = totalSeconds;
+  let isRunning = false;
+  let isBreak = false;
+  let interval = null;
+  let sessionCount = 0;
+  let cycleCount = 0;        // 同一個休息週期內完成幾個番茄
+  let settingsOpen = false;
+
+  // 提示音（用 Web Audio API 產生一個簡單的提示音，不需要外部檔案）
+  function playBeep() {
+    try {
+      const actx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = actx.createOscillator();
+      const gain = actx.createGain();
+      osc.connect(gain);
+      gain.connect(actx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.5, actx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + 0.6);
+      osc.start(actx.currentTime);
+      osc.stop(actx.currentTime + 0.6);
+
+      // 第二聲
+      const osc2 = actx.createOscillator();
+      const gain2 = actx.createGain();
+      osc2.connect(gain2);
+      gain2.connect(actx.destination);
+      osc2.type = 'sine';
+      osc2.frequency.value = 1100;
+      gain2.gain.setValueAtTime(0.4, actx.currentTime + 0.25);
+      gain2.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + 0.85);
+      osc2.start(actx.currentTime + 0.25);
+      osc2.stop(actx.currentTime + 0.85);
+    } catch(e) { /* 靜默失敗 */ }
+  }
+
+  // 顯示通知
+  function showNotification(title, body) {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try { new Notification(title, { body }); } catch(e) {}
+    }
+  }
+
+  // 請求通知權限
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+
+  // 更新 UI
+  function updateUI() {
+    const m = Math.floor(timeLeft / 60);
+    const s = timeLeft % 60;
+    timerDisplay.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+
+    const progress = timeLeft / totalSeconds;
+    progressRing.style.strokeDashoffset = CIRCUMFERENCE * (1 - progress);
+
+    if (isBreak) {
+      timerDisplay.className = 'timer break';
+      progressRing.className = 'ring-progress break';
+      statusBadge.className = 'status-badge break';
+      statusBadge.textContent = '休息中';
+      mainBtn.className = 'btn btn-main break';
+      timerSub.textContent = `${breakMinutes} 分鐘 · 休息`;
+    } else {
+      timerDisplay.className = 'timer work';
+      progressRing.className = 'ring-progress work';
+      statusBadge.className = 'status-badge work';
+      statusBadge.textContent = '專注中';
+      mainBtn.className = 'btn btn-main work';
+      timerSub.textContent = `${workMinutes} 分鐘 · 專注`;
+    }
+  }
+
+  // 設定計時器（不啟動）
+  function setPhase(breakPhase) {
+    isBreak = breakPhase;
+    if (breakPhase) {
+      totalSeconds = breakMinutes * 60;
+    } else {
+      totalSeconds = workMinutes * 60;
+    }
+    timeLeft = totalSeconds;
+    updateUI();
+  }
+
+  // 完成一個階段
+  function phaseComplete() {
+    playBeep();
+
+    if (isBreak) {
+      // 休息結束 → 回到工作
+      showNotification('番茄鐘', '休息結束，開始專注吧！');
+      setPhase(false);
+      mainBtn.textContent = '開始';
+      isRunning = false;
+    } else {
+      // 工作結束 → 進入休息
+      sessionCount++;
+      cycleCount++;
+      sessionCountEl.textContent = sessionCount;
+      showNotification('番茄鐘', '休息一下吧！');
+
+      let breakLen = breakMinutes;
+      if (cycleCount % 4 === 0) {
+        breakLen = 15;
+      }
+
+      isBreak = true;
+      totalSeconds = breakLen * 60;
+      timeLeft = totalSeconds;
+      updateUI();
+      mainBtn.textContent = '開始休息';
+      isRunning = false;
+    }
+  }
+
+  // 倒數 tick
+  function tick() {
+    timeLeft--;
+    updateUI();
+
+    if (timeLeft <= 0) {
+      clearInterval(interval);
+      interval = null;
+      phaseComplete();
+    }
+  }
+
+  // 開始 / 暫停
+  function toggleTimer() {
+    if (isRunning) {
+      clearInterval(interval);
+      interval = null;
+      isRunning = false;
+      mainBtn.textContent = '繼續';
+      return;
+    }
+
+    // 如果時間已經歸零，重新開始對應階段
+    if (timeLeft <= 0) {
+      if (isBreak) {
+        setPhase(true);
+      } else {
+        setPhase(false);
+      }
+    }
+
+    isRunning = true;
+    mainBtn.textContent = '暫停';
+    interval = setInterval(tick, 1000);
+  }
+
+  // 重置
+  function resetTimer() {
+    clearInterval(interval);
+    interval = null;
+    isRunning = false;
+    setPhase(false);
+    mainBtn.textContent = '開始';
+  }
+
+  // === 設定 ===
+  function applySettings() {
+    const w = parseInt(workValue.textContent, 10);
+    const b = parseInt(breakValue.textContent, 10);
+    if (w >= 1 && w <= 120) workMinutes = w;
+    if (b >= 1 && b <= 60) breakMinutes = b;
+    if (!isRunning) {
+      setPhase(false);
+      mainBtn.textContent = '開始';
+    }
+  }
+
+  workInc.addEventListener('click', () => {
+    let v = parseInt(workValue.textContent, 10);
+    if (v < 120) { v++; workValue.textContent = v; applySettings(); }
+  });
+  workDec.addEventListener('click', () => {
+    let v = parseInt(workValue.textContent, 10);
+    if (v > 1) { v--; workValue.textContent = v; applySettings(); }
+  });
+  breakInc.addEventListener('click', () => {
+    let v = parseInt(breakValue.textContent, 10);
+    if (v < 60) { v++; breakValue.textContent = v; applySettings(); }
+  });
+  breakDec.addEventListener('click', () => {
+    let v = parseInt(breakValue.textContent, 10);
+    if (v > 1) { v--; breakValue.textContent = v; applySettings(); }
+  });
+
+  settingsToggle.addEventListener('click', () => {
+    settingsOpen = !settingsOpen;
+    settingsPanel.style.display = settingsOpen ? 'block' : 'none';
+  });
+
+  // 事件綁定
+  mainBtn.addEventListener('click', toggleTimer);
+  resetBtn.addEventListener('click', resetTimer);
+
+  // 初始化
+  updateUI();
+  sessionCountEl.textContent = sessionCount;
+</script>
+</body>
+</html>
