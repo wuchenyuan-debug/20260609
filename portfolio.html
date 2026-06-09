@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>學生 Vibe Coding 作品集</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #faf8f5;
+    --surface: #ffffff;
+    --text: #1a1a2e;
+    --text-dim: #7c7a8a;
+    --primary: #6c5ce7;
+    --primary-soft: rgba(108,92,231,0.08);
+    --primary-glow: rgba(108,92,231,0.2);
+    --accent: #fd79a8;
+    --accent-soft: rgba(253,121,168,0.12);
+    --orange: #fdcb6e;
+    --green: #00b894;
+    --card-shadow: 0 8px 32px rgba(26,26,46,0.06), 0 2px 8px rgba(26,26,46,0.04);
+    --card-hover: 0 16px 48px rgba(26,26,46,0.10), 0 4px 16px rgba(26,26,46,0.06);
+    --radius-card: 24px;
+    --radius-sm: 14px;
+    --transition: 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ===== 背景裝飾 ===== */
+  .bg-decor {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  .bg-decor .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.3;
+  }
+
+  .bg-decor .orb:nth-child(1) {
+    width: 500px; height: 500px;
+    background: var(--primary);
+    top: -200px; right: -100px;
+    animation: float 20s ease-in-out infinite;
+  }
+
+  .bg-decor .orb:nth-child(2) {
+    width: 400px; height: 400px;
+    background: var(--accent);
+    bottom: -150px; left: -100px;
+    animation: float 25s ease-in-out infinite reverse;
+  }
+
+  .bg-decor .orb:nth-child(3) {
+    width: 300px; height: 300px;
+    background: var(--orange);
+    bottom: 30%; right: 10%;
+    animation: float 18s ease-in-out infinite 3s;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(30px, -40px) scale(1.05); }
+    66% { transform: translate(-20px, 20px) scale(0.95); }
+  }
+
+  /* ===== Layout ===== */
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  /* ===== Hero ===== */
+  .hero {
+    text-align: center;
+    padding: 40px 0 56px;
+    animation: fadeDown 0.8s ease;
+  }
+
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .avatar {
+    width: 88px; height: 88px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 36px;
+    color: #fff;
+    box-shadow: 0 8px 32px var(--primary-glow);
+    animation: pulse-shadow 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse-shadow {
+    0%, 100% { box-shadow: 0 8px 32px var(--primary-glow); }
+    50% { box-shadow: 0 8px 48px var(--primary-glow); }
+  }
+
+  .hero h1 {
+    font-family: 'Fredoka', 'Noto Sans TC', sans-serif;
+    font-size: 40px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero .sub {
+    font-size: 17px;
+    color: var(--text-dim);
+    margin-top: 10px;
+    font-weight: 400;
+  }
+
+  .hero .tagline {
+    display: inline-block;
+    margin-top: 16px;
+    padding: 8px 20px;
+    background: var(--primary-soft);
+    border-radius: 60px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--primary);
+  }
+
+  /* ===== Stats ===== */
+  .stats-row {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-top: 32px;
+  }
+
+  .stat-box {
+    text-align: center;
+  }
+
+  .stat-box .num {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .stat-box .label {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  /* ===== Section Title ===== */
+  .section-title {
+    font-family: 'Fredoka', 'Noto Sans TC', sans-serif;
+    font-size: 26px;
+    font-weight: 600;
+    margin: 48px 0 8px;
+    letter-spacing: -0.3px;
+  }
+
+  .section-desc {
+    font-size: 15px;
+    color: var(--text-dim);
+    margin-bottom: 28px;
+    line-height: 1.6;
+  }
+
+  /* ===== Project Cards ===== */
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+  }
+
+  .project-card {
+    background: var(--surface);
+    border-radius: var(--radius-card);
+    box-shadow: var(--card-shadow);
+    padding: 28px 24px 24px;
+    transition: all var(--transition);
+    cursor: default;
+    position: relative;
+    overflow: hidden;
+    animation: cardIn 0.6s ease both;
+  }
+
+  .project-card:nth-child(1) { animation-delay: 0.1s; }
+  .project-card:nth-child(2) { animation-delay: 0.2s; }
+  .project-card:nth-child(3) { animation-delay: 0.3s; }
+
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .project-card:hover {
+    box-shadow: var(--card-hover);
+    transform: translateY(-4px);
+  }
+
+  .project-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+  }
+
+  .project-card:nth-child(1)::before { background: linear-gradient(90deg, var(--primary), #a29bfe); }
+  .project-card:nth-child(2)::before { background: linear-gradient(90deg, var(--accent), #fab1a0); }
+  .project-card:nth-child(3)::before { background: linear-gradient(90deg, var(--green), #81ecec); }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  .card-icon {
+    width: 44px; height: 44px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .project-card:nth-child(1) .card-icon { background: var(--primary-soft); }
+  .project-card:nth-child(2) .card-icon { background: var(--accent-soft); }
+  .project-card:nth-child(3) .card-icon { background: rgba(0,184,148,0.1); }
+
+  .card-header h3 {
+    font-family: 'Fredoka', 'Noto Sans TC', sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  .card-desc {
+    font-size: 14px;
+    color: var(--text-dim);
+    line-height: 1.7;
+    margin-bottom: 16px;
+  }
+
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+
+  .card-tags span {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 60px;
+    background: var(--primary-soft);
+    color: var(--primary);
+  }
+
+  .project-card:nth-child(2) .card-tags span {
+    background: var(--accent-soft);
+    color: #d6306b;
+  }
+
+  .project-card:nth-child(3) .card-tags span {
+    background: rgba(0,184,148,0.1);
+    color: #008060;
+  }
+
+  .card-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    text-decoration: none;
+    padding: 8px 0;
+    transition: color 0.2s;
+    position: relative;
+  }
+
+  .card-link::after {
+    content: '';
+    position: absolute;
+    bottom: 4px; left: 0;
+    width: 0;
+    height: 2px;
+    border-radius: 2px;
+    transition: width var(--transition);
+  }
+
+  .project-card:nth-child(1) .card-link::after { background: var(--primary); }
+  .project-card:nth-child(2) .card-link::after { background: var(--accent); }
+  .project-card:nth-child(3) .card-link::after { background: var(--green); }
+
+  .card-link:hover::after { width: 100%; }
+
+  .card-link svg {
+    width: 16px; height: 16px;
+    transition: transform 0.2s;
+  }
+
+  .card-link:hover svg { transform: translateX(4px); }
+
+  /* ===== About Section ===== */
+  .about-box {
+    background: var(--surface);
+    border-radius: var(--radius-card);
+    box-shadow: var(--card-shadow);
+    padding: 32px 36px;
+    animation: cardIn 0.6s ease 0.35s both;
+  }
+
+  .about-box p {
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--text-dim);
+  }
+
+  .about-box p strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .tech-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .tech-list span {
+    padding: 6px 16px;
+    border-radius: 60px;
+    font-size: 13px;
+    font-weight: 500;
+    background: var(--primary-soft);
+    color: var(--primary);
+    transition: all 0.2s;
+  }
+
+  .tech-list span:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--primary-glow);
+  }
+
+  .tech-list span:nth-child(2n) {
+    background: var(--accent-soft);
+    color: #d6306b;
+  }
+
+  .tech-list span:nth-child(3n) {
+    background: rgba(0,184,148,0.1);
+    color: #008060;
+  }
+
+  /* ===== Footer ===== */
+  .footer {
+    text-align: center;
+    margin-top: 56px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(0,0,0,0.06);
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+
+  .footer .heart { color: var(--accent); }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 700px) {
+    .container { padding: 32px 16px 60px; }
+    .hero { padding: 24px 0 36px; }
+    .hero h1 { font-size: 30px; }
+    .projects-grid { grid-template-columns: 1fr; }
+    .stats-row { gap: 24px; }
+    .stat-box .num { font-size: 22px; }
+    .about-box { padding: 24px 20px; }
+  }
+
+  @media (max-width: 400px) {
+    .hero h1 { font-size: 24px; }
+    .section-title { font-size: 22px; }
+    .project-card { padding: 20px 16px; }
+    .card-header h3 { font-size: 17px; }
+  }
+
+  /* ===== Accessibility ===== */
+  @media (prefers-reduced-motion: reduce) {
+    .project-card, .hero, .bg-decor .orb { animation: none; }
+    .bg-decor .orb { display: none; }
+    .project-card:hover { transform: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-decor">
+  <div class="orb"></div>
+  <div class="orb"></div>
+  <div class="orb"></div>
+</div>
+
+<div class="container">
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="avatar">🎨</div>
+    <h1>我的 Vibe Coding 作品集</h1>
+    <p class="sub">用 AI 輔助編寫程式，把想法變成真實的網頁應用</p>
+    <span class="tagline">✨ 學習筆記 · 創意實踐 · 持續成長</span>
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="num" id="projectCount">3</div>
+        <div class="label">專案</div>
+      </div>
+      <div class="stat-box">
+        <div class="num" id="totalLines">--</div>
+        <div class="label">總行數</div>
+      </div>
+      <div class="stat-box">
+        <div class="num">HTML</div>
+        <div class="label">技術棧</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Projects -->
+  <h2 class="section-title">🛠 專案作品</h2>
+  <p class="section-desc">使用 Vibe Coding 方式，與 AI 協作完成的網頁應用</p>
+
+  <div class="projects-grid">
+    <!-- Card 1: Pomodoro -->
+    <div class="project-card">
+      <div class="card-header">
+        <div class="card-icon">🍅</div>
+        <h3>番茄鐘計時器</h3>
+      </div>
+      <p class="card-desc">
+        專注力輔助工具，採用深色主題與紅綠配色區分工作／休息狀態。
+        具備圓形進度環、自訂時間、自動切換休息模式，
+        每完成 4 個番茄鐘自動延長為 15 分鐘長休息。
+      </p>
+      <div class="card-tags">
+        <span>計時器</span>
+        <span>生產力</span>
+        <span>深色模式</span>
+        <span>CSS 動畫</span>
+      </div>
+      <a class="card-link" href="pomodoro.html" target="_blank">
+        開啟專案
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+
+    <!-- Card 2: Todo -->
+    <div class="project-card">
+      <div class="card-header">
+        <div class="card-icon">📋</div>
+        <h3>待辦事項清單</h3>
+      </div>
+      <p class="card-desc">
+        簡潔高效的 Todo List，支援新增、刪除、標記完成與三種篩選檢視。
+        使用 localStorage 保存資料，關閉頁面後不遺失。
+        輕量化設計，純 CSS 實現進場動畫與懸停效果。
+      </p>
+      <div class="card-tags">
+        <span>生產力</span>
+        <span>localStorage</span>
+        <span>響應式</span>
+        <span>極簡</span>
+      </div>
+      <a class="card-link" href="todo.html" target="_blank">
+        開啟專案
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+
+    <!-- Card 3: Weather -->
+    <div class="project-card">
+      <div class="card-header">
+        <div class="card-icon">🌤</div>
+        <h3>新北天氣 App</h3>
+      </div>
+      <p class="card-desc">
+        整合 Open-Meteo 免費天氣 API，提供新北市 29 個鄉鎮市區的即時天氣與
+        7 日預報。具備動態背景切換（晴／多雲／雨／夜間）、溫度條視覺化、
+        體感溫度與風速濕度等詳細資訊。
+      </p>
+      <div class="card-tags">
+        <span>API 串接</span>
+        <span>天氣</span>
+        <span>動態背景</span>
+        <span>下拉選單</span>
+      </div>
+      <a class="card-link" href="weather.html" target="_blank">
+        開啟專案
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+  </div>
+
+  <!-- About -->
+  <h2 class="section-title">📖 關於 Vibe Coding</h2>
+  <p class="section-desc">什麼是 Vibe Coding？這是我學習程式設計的方式</p>
+
+  <div class="about-box">
+    <p>
+      <strong>Vibe Coding</strong> 是一種新興的程式設計方式 —— 先用自然語言
+      （中文）描述想要的功能，讓 AI 生成程式碼，再透過對話逐步調整與改進。
+    </p>
+    <p style="margin-top:12px">
+      這種方式大幅降低了學習門檻，讓我能專注在<strong>創意發想與邏輯設計</strong>，
+      而不是被語法細節卡住。上面的三個專案都是我與 AI 協作完成的成果，
+      從番茄鐘到天氣 App，每一行程式碼都是邊學邊寫的成長足跡。
+    </p>
+    <div class="tech-list">
+      <span>HTML5</span>
+      <span>CSS3</span>
+      <span>JavaScript</span>
+      <span>Open-Meteo API</span>
+      <span>localStorage</span>
+      <span>Web Audio API</span>
+      <span>RWD</span>
+      <span>Vibe Coding</span>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    Made with <span class="heart">♥</span> and Vibe Coding
+  </div>
+</div>
+
+<script>
+  // 自動統計 HTML 檔案行數（僅展示）
+  (async function countLines() {
+    const files = ['pomodoro.html', 'todo.html', 'weather.html'];
+    let total = 0;
+    for (const f of files) {
+      try {
+        const res = await fetch(f);
+        const text = await res.text();
+        total += text.split('\n').length;
+      } catch(e) {}
+    }
+    document.getElementById('totalLines').textContent = total.toLocaleString();
+  })();
+</script>
+</body>
+</html>
