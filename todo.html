@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Todo List</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #f4f3f0;
+    --surface: #ffffff;
+    --text: #1c1b19;
+    --text-dim: #99948c;
+    --border: #e3e0da;
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+    --done: #939b8e;
+    --delete: #ef4444;
+    --radius: 12px;
+    --shadow: 0 2px 12px rgba(28,27,25,0.06);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 60px 20px 40px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 520px;
+  }
+
+  h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+  }
+
+  .sub {
+    font-size: 14px;
+    color: var(--text-dim);
+    margin-bottom: 28px;
+  }
+
+  /* 輸入區 */
+  .input-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .input-group input {
+    flex: 1;
+    padding: 14px 16px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 15px;
+    outline: none;
+    background: var(--surface);
+    color: var(--text);
+    transition: border-color 0.2s;
+  }
+
+  .input-group input:focus {
+    border-color: var(--accent);
+  }
+
+  .input-group input::placeholder {
+    color: var(--text-dim);
+  }
+
+  .input-group button {
+    padding: 14px 24px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s;
+  }
+
+  .input-group button:hover {
+    background: var(--accent-hover);
+  }
+
+  /* 篩選 */
+  .filters {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 20px;
+    background: var(--surface);
+    padding: 4px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+
+  .filters button {
+    flex: 1;
+    padding: 10px 12px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .filters button:hover {
+    color: var(--text);
+  }
+
+  .filters button.active {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  /* 統計 */
+  .stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+
+  .stats .count {
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .stats .clear-btn {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .stats .clear-btn:hover {
+    color: var(--delete);
+  }
+
+  /* 列表 */
+  .todo-list {
+    list-style: none;
+  }
+
+  .todo-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    transition: all 0.2s;
+    animation: fadeIn 0.25s ease;
+  }
+
+  .todo-item + .todo-item {
+    margin-top: 8px;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .todo-item .checkbox {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .todo-item .checkbox.checked {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .todo-item .checkbox.checked::after {
+    content: '✓';
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .todo-item .todo-text {
+    flex: 1;
+    font-size: 15px;
+    line-height: 1.4;
+    word-break: break-word;
+    transition: color 0.2s;
+  }
+
+  .todo-item .todo-text.done {
+    color: var(--done);
+    text-decoration: line-through;
+  }
+
+  .todo-item .delete-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 18px;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .todo-item .delete-btn:hover {
+    background: rgba(239,68,68,0.1);
+    color: var(--delete);
+  }
+
+  /* 空狀態 */
+  .empty {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+
+  .empty .icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+    opacity: 0.4;
+  }
+
+  /* 響應式 */
+  @media (max-width: 480px) {
+    body { padding: 32px 16px 24px; }
+    h1 { font-size: 24px; }
+    .input-group input { padding: 12px 14px; font-size: 14px; }
+    .input-group button { padding: 12px 18px; font-size: 14px; }
+    .todo-item { padding: 12px 14px; }
+    .todo-item .todo-text { font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>待辦事項</h1>
+  <p class="sub" id="dateDisplay"></p>
+
+  <div class="input-group">
+    <input type="text" id="todoInput" placeholder="新增待辦…" autofocus>
+    <button id="addBtn">新增</button>
+  </div>
+
+  <div class="filters">
+    <button data-filter="all" class="active">全部</button>
+    <button data-filter="active">未完成</button>
+    <button data-filter="completed">已完成</button>
+  </div>
+
+  <div class="stats">
+    <span>剩餘 <span class="count" id="remainCount">0</span> 項</span>
+    <button class="clear-btn" id="clearDoneBtn">清除已完成</button>
+  </div>
+
+  <ul class="todo-list" id="todoList"></ul>
+
+  <div class="empty" id="emptyState">
+    <div class="icon">📋</div>
+    <div>尚無待辦事項</div>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'todo_list';
+
+  let todos = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+  let currentFilter = 'all';
+
+  const todoInput = document.getElementById('todoInput');
+  const addBtn = document.getElementById('addBtn');
+  const todoList = document.getElementById('todoList');
+  const emptyState = document.getElementById('emptyState');
+  const remainCount = document.getElementById('remainCount');
+  const clearDoneBtn = document.getElementById('clearDoneBtn');
+
+  // 顯示今天日期
+  document.getElementById('dateDisplay').textContent =
+    new Date().toLocaleDateString('zh-TW', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+  }
+
+  function getFiltered() {
+    if (currentFilter === 'active') return todos.filter(t => !t.done);
+    if (currentFilter === 'completed') return todos.filter(t => t.done);
+    return todos;
+  }
+
+  function render() {
+    const filtered = getFiltered();
+    todoList.innerHTML = '';
+
+    filtered.forEach(todo => {
+      const li = document.createElement('li');
+      li.className = 'todo-item';
+
+      const cb = document.createElement('div');
+      cb.className = 'checkbox' + (todo.done ? ' checked' : '');
+      cb.addEventListener('click', () => toggleTodo(todo.id));
+
+      const span = document.createElement('span');
+      span.className = 'todo-text' + (todo.done ? ' done' : '');
+      span.textContent = todo.text;
+
+      const del = document.createElement('button');
+      del.className = 'delete-btn';
+      del.innerHTML = '✕';
+      del.addEventListener('click', () => deleteTodo(todo.id));
+
+      li.appendChild(cb);
+      li.appendChild(span);
+      li.appendChild(del);
+      todoList.appendChild(li);
+    });
+
+    const activeCount = todos.filter(t => !t.done).length;
+    remainCount.textContent = activeCount;
+    emptyState.style.display = todos.length === 0 ? 'block' : 'none';
+  }
+
+  function addTodo() {
+    const text = todoInput.value.trim();
+    if (!text) return;
+    todos.push({ id: Date.now(), text, done: false });
+    todoInput.value = '';
+    save();
+    render();
+    todoInput.focus();
+  }
+
+  function toggleTodo(id) {
+    const todo = todos.find(t => t.id === id);
+    if (todo) { todo.done = !todo.done; save(); render(); }
+  }
+
+  function deleteTodo(id) {
+    todos = todos.filter(t => t.id !== id);
+    save();
+    render();
+  }
+
+  function clearDone() {
+    todos = todos.filter(t => !t.done);
+    save();
+    render();
+  }
+
+  // 事件綁定
+  addBtn.addEventListener('click', addTodo);
+  todoInput.addEventListener('keydown', e => { if (e.key === 'Enter') addTodo(); });
+
+  document.querySelectorAll('.filters button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelector('.filters .active').classList.remove('active');
+      btn.classList.add('active');
+      currentFilter = btn.dataset.filter;
+      render();
+    });
+  });
+
+  clearDoneBtn.addEventListener('click', clearDone);
+
+  render();
+</script>
+</body>
+</html>
