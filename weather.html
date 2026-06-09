@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新北天氣</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Outfit:wght@300;600;700&display=swap');
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #e8edf3;
+    --card: rgba(255,255,255,0.72);
+    --card-border: rgba(255,255,255,0.4);
+    --text: #1a1e26;
+    --text-dim: #6b7485;
+    --accent: #3b7dd8;
+    --shadow: 0 8px 32px rgba(26,30,38,0.08);
+    --radius: 24px;
+  }
+
+  body {
+    font-family: 'Noto Sans TC', 'Outfit', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 32px 16px;
+    -webkit-font-smoothing: antialiased;
+    transition: background 0.8s ease;
+  }
+
+  body.sunny { background: linear-gradient(145deg, #f7e9d0 0%, #d4e0f0 100%); }
+  body.cloudy { background: linear-gradient(145deg, #d5dce6 0%, #bcc6d4 100%); }
+  body.rainy { background: linear-gradient(145deg, #b8c6d4 0%, #95a5b8 100%); }
+  body.night { background: linear-gradient(145deg, #1a2440 0%, #2c3a5a 100%); }
+
+  .container {
+    width: 100%;
+    max-width: 720px;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .brand-icon {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 18px;
+  }
+
+  .brand h1 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+
+  .brand span {
+    font-size: 13px;
+    color: var(--text-dim);
+    font-weight: 400;
+  }
+
+  /* Select */
+  .select-wrap {
+    position: relative;
+  }
+
+  .select-wrap select {
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    padding: 10px 36px 10px 16px;
+    border: none;
+    border-radius: 14px;
+    background: var(--card);
+    backdrop-filter: blur(12px);
+    color: var(--text);
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    min-width: 160px;
+    box-shadow: var(--shadow);
+    transition: box-shadow 0.2s;
+  }
+
+  .select-wrap select:hover { box-shadow: 0 8px 32px rgba(26,30,38,0.14); }
+
+  .select-wrap::after {
+    content: '▾';
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-dim);
+    font-size: 14px;
+    pointer-events: none;
+  }
+
+  /* 現在天氣 */
+  .current-card {
+    background: var(--card);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 32px 36px;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+    animation: fadeUp 0.6s ease;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .current-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .current-temp-area {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .current-temp {
+    font-family: 'Outfit', sans-serif;
+    font-size: 72px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -2px;
+  }
+
+  .current-temp .deg {
+    font-size: 32px;
+    font-weight: 300;
+    vertical-align: super;
+  }
+
+  .current-condition {
+    margin-top: 6px;
+  }
+
+  .current-condition .cond-text {
+    font-size: 18px;
+    font-weight: 500;
+  }
+
+  .current-condition .feels {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  .weather-icon {
+    font-size: 56px;
+    line-height: 1;
+  }
+
+  .current-details {
+    display: flex;
+    gap: 24px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(0,0,0,0.06);
+    flex-wrap: wrap;
+  }
+
+  .detail-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--text-dim);
+  }
+
+  .detail-item .label { font-weight: 500; color: var(--text); }
+
+  /* 7 日預報 */
+  .forecast-section {
+    background: var(--card);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 28px 32px;
+    box-shadow: var(--shadow);
+    animation: fadeUp 0.6s ease 0.15s both;
+  }
+
+  .forecast-section h2 {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+  }
+
+  .forecast-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .forecast-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 14px;
+    transition: background 0.2s;
+    cursor: default;
+  }
+
+  .forecast-row:hover { background: rgba(0,0,0,0.03); }
+
+  .forecast-row .day {
+    width: 80px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .forecast-row .f-icon {
+    width: 40px;
+    text-align: center;
+    font-size: 22px;
+  }
+
+  .forecast-row .f-cond {
+    flex: 1;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+
+  .forecast-row .f-temps {
+    font-family: 'Outfit', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    display: flex;
+    gap: 10px;
+    min-width: 80px;
+    justify-content: flex-end;
+  }
+
+  .forecast-row .f-temps .high { color: var(--text); }
+  .forecast-row .f-temps .low { color: var(--text-dim); }
+
+  .forecast-row .f-bar {
+    width: 80px;
+    height: 4px;
+    background: rgba(0,0,0,0.08);
+    border-radius: 4px;
+    margin-left: 12px;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .forecast-row .f-bar .fill {
+    position: absolute;
+    top: 0; left: 0;
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #74b9ff, #3b7dd8);
+    transition: width 0.6s ease;
+  }
+
+  /* 載入 */
+  .loading {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-dim);
+    font-size: 15px;
+  }
+
+  .loading .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid rgba(0,0,0,0.08);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* 錯誤 */
+  .error {
+    text-align: center;
+    padding: 40px 20px;
+    color: #c0392b;
+    font-size: 14px;
+  }
+
+  /* 更新時間 */
+  .update-time {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 16px;
+    opacity: 0.7;
+  }
+
+  /* Responsive */
+  @media (max-width: 560px) {
+    body { padding: 20px 12px; }
+    .current-card { padding: 24px 20px; }
+    .current-temp { font-size: 56px; }
+    .current-temp .deg { font-size: 24px; }
+    .weather-icon { font-size: 44px; }
+    .forecast-section { padding: 20px 16px; }
+    .forecast-row { padding: 8px 8px; }
+    .forecast-row .day { width: 60px; font-size: 13px; }
+    .forecast-row .f-bar { width: 50px; }
+    .brand h1 { font-size: 17px; }
+    .header { margin-bottom: 20px; }
+  }
+
+  @media (max-width: 400px) {
+    .current-temp { font-size: 44px; }
+    .forecast-row .f-bar { display: none; }
+    .current-details { gap: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <div class="brand">
+      <div class="brand-icon">🌤</div>
+      <div>
+        <h1>新北天氣 <span>New Taipei</span></h1>
+      </div>
+    </div>
+    <div class="select-wrap">
+      <select id="districtSelect"></select>
+    </div>
+  </div>
+
+  <!-- 現在天氣 -->
+  <div class="current-card" id="currentCard">
+    <div class="loading" id="loadingState">
+      <div class="spinner"></div>
+      <div>載入天氣資料中…</div>
+    </div>
+    <div class="error" id="errorState" style="display:none">
+      ❌ 無法取得天氣資料，請稍後再試
+    </div>
+    <div id="weatherContent" style="display:none">
+      <div class="current-top">
+        <div>
+          <div class="current-temp-area">
+            <div class="current-temp" id="currentTemp">--<span class="deg">°</span></div>
+            <div class="current-condition">
+              <div class="cond-text" id="currentCond">--</div>
+              <div class="feels" id="feelsLike">體感 --°</div>
+            </div>
+          </div>
+        </div>
+        <div class="weather-icon" id="weatherIcon">🌤</div>
+      </div>
+      <div class="current-details">
+        <div class="detail-item">💧 濕度 <span class="label" id="humidity">--%</span></div>
+        <div class="detail-item">💨 風速 <span class="label" id="windSpeed">-- km/h</span></div>
+        <div class="detail-item">🌅 日出 <span class="label" id="sunrise">--:--</span></div>
+        <div class="detail-item">🌇 日落 <span class="label" id="sunset">--:--</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7 日預報 -->
+  <div class="forecast-section" id="forecastSection" style="display:none">
+    <h2>7 日預報</h2>
+    <div class="forecast-list" id="forecastList"></div>
+  </div>
+
+  <div class="update-time" id="updateTime"></div>
+</div>
+
+<script>
+  // ===== 新北市 29 個鄉鎮市區 (經緯度) =====
+  const DISTRICTS = [
+    { name: '板橋區', lat: 25.0111, lon: 121.4598 },
+    { name: '三重區', lat: 25.0615, lon: 121.4905 },
+    { name: '中和區', lat: 24.9995, lon: 121.4956 },
+    { name: '永和區', lat: 25.0074, lon: 121.5135 },
+    { name: '新莊區', lat: 25.0343, lon: 121.4471 },
+    { name: '新店區', lat: 24.9473, lon: 121.5412 },
+    { name: '樹林區', lat: 24.9909, lon: 121.4171 },
+    { name: '鶯歌區', lat: 24.9551, lon: 121.3541 },
+    { name: '三峽區', lat: 24.9338, lon: 121.3679 },
+    { name: '淡水區', lat: 25.1722, lon: 121.4414 },
+    { name: '汐止區', lat: 25.0682, lon: 121.6595 },
+    { name: '瑞芳區', lat: 25.1095, lon: 121.8060 },
+    { name: '土城區', lat: 24.9724, lon: 121.4436 },
+    { name: '蘆洲區', lat: 25.0850, lon: 121.4732 },
+    { name: '五股區', lat: 25.0828, lon: 121.4386 },
+    { name: '泰山區', lat: 25.0580, lon: 121.4306 },
+    { name: '林口區', lat: 25.0793, lon: 121.3923 },
+    { name: '深坑區', lat: 25.0017, lon: 121.6149 },
+    { name: '石碇區', lat: 24.9931, lon: 121.6594 },
+    { name: '坪林區', lat: 24.9374, lon: 121.7112 },
+    { name: '三芝區', lat: 25.2580, lon: 121.5010 },
+    { name: '石門區', lat: 25.2947, lon: 121.5669 },
+    { name: '八里區', lat: 25.1470, lon: 121.3987 },
+    { name: '平溪區', lat: 25.0281, lon: 121.7323 },
+    { name: '雙溪區', lat: 25.0353, lon: 121.8653 },
+    { name: '貢寮區', lat: 25.0220, lon: 121.9117 },
+    { name: '金山區', lat: 25.2170, lon: 121.5969 },
+    { name: '萬里區', lat: 25.1792, lon: 121.6899 },
+    { name: '烏來區', lat: 24.8647, lon: 121.5516 }
+  ];
+
+  // DOM
+  const districtSelect = document.getElementById('districtSelect');
+  const loadingState = document.getElementById('loadingState');
+  const errorState = document.getElementById('errorState');
+  const weatherContent = document.getElementById('weatherContent');
+  const forecastSection = document.getElementById('forecastSection');
+  const forecastList = document.getElementById('forecastList');
+  const updateTime = document.getElementById('updateTime');
+
+  const currentTemp = document.getElementById('currentTemp');
+  const currentCond = document.getElementById('currentCond');
+  const feelsLike = document.getElementById('feelsLike');
+  const weatherIcon = document.getElementById('weatherIcon');
+  const humidity = document.getElementById('humidity');
+  const windSpeed = document.getElementById('windSpeed');
+  const sunrise = document.getElementById('sunrise');
+  const sunset = document.getElementById('sunset');
+
+  // 填充下拉選單
+  DISTRICTS.forEach((d, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = d.name;
+    districtSelect.appendChild(opt);
+  });
+
+  // 預設選擇板橋
+  districtSelect.value = '0';
+
+  // WMO 天氣代碼 → 中文描述 + Emoji
+  function wmoInfo(code, isDay) {
+    if (code === 0) return { text: '晴天', icon: isDay ? '☀️' : '🌙', cls: 'sunny' };
+    if (code === 1) return { text: '多雲時晴', icon: isDay ? '🌤' : '🌙', cls: 'sunny' };
+    if (code === 2) return { text: '多雲', icon: '⛅', cls: 'cloudy' };
+    if (code === 3) return { text: '陰天', icon: '☁️', cls: 'cloudy' };
+    if (code >= 45 && code <= 48) return { text: '霧', icon: '🌫', cls: 'cloudy' };
+    if ((code >= 51 && code <= 55) || (code >= 80 && code <= 82)) return { text: '小雨', icon: '🌦', cls: 'rainy' };
+    if ((code >= 56 && code <= 57) || (code >= 83 && code <= 84)) return { text: '冰雨', icon: '🌧', cls: 'rainy' };
+    if ((code >= 61 && code <= 65) || (code >= 85 && code <= 86)) return { text: '雨天', icon: '🌧', cls: 'rainy' };
+    if (code >= 71 && code <= 77) return { text: '雪', icon: '❄️', cls: 'rainy' };
+    if (code >= 95) return { text: '雷雨', icon: '⛈', cls: 'rainy' };
+    return { text: '--', icon: '🌤', cls: 'cloudy' };
+  }
+
+  // 日出日落時間轉換
+  function formatTime(isoStr) {
+    if (!isoStr) return '--:--';
+    const d = new Date(isoStr);
+    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  }
+
+  // 取得星期幾
+  function getDayName(dateStr, idx) {
+    if (idx === 0) return '今天';
+    if (idx === 1) return '明天';
+    const names = ['日','一','二','三','四','五','六'];
+    const d = new Date(dateStr);
+    return '週' + names[d.getDay()];
+  }
+
+  // 更新背景
+  function updateBodyBg(wmoCode, isDay) {
+    const info = wmoInfo(wmoCode, isDay);
+    document.body.className = info.cls;
+    if (!isDay && wmoCode <= 1) document.body.className = 'night';
+  }
+
+  // 載入天氣
+  async function loadWeather(districtIdx) {
+    const d = DISTRICTS[districtIdx];
+    if (!d) return;
+
+    loadingState.style.display = 'block';
+    errorState.style.display = 'none';
+    weatherContent.style.display = 'none';
+    forecastSection.style.display = 'none';
+
+    const now = new Date();
+    const isDay = now.getHours() >= 6 && now.getHours() < 18;
+
+    try {
+      const url =
+        `https://api.open-meteo.com/v1/forecast?` +
+        `latitude=${d.lat}&longitude=${d.lon}` +
+        `&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m` +
+        `&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset` +
+        `&timezone=Asia%2FTaipei&forecast_days=8`;
+
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('API error');
+      const data = await res.json();
+
+      const cur = data.current;
+      const daily = data.daily;
+
+      // 目前天氣
+      currentTemp.innerHTML = Math.round(cur.temperature_2m) + '<span class="deg">°</span>';
+      const wmo = cur.weather_code;
+      const info = wmoInfo(wmo, isDay);
+      currentCond.textContent = info.text;
+      weatherIcon.textContent = info.icon;
+      feelsLike.textContent = '體感 ' + Math.round(cur.apparent_temperature) + '°';
+      humidity.textContent = cur.relative_humidity_2m + '%';
+      windSpeed.textContent = Math.round(cur.wind_speed_10m) + ' km/h';
+      sunrise.textContent = formatTime(daily.sunrise[0]);
+      sunset.textContent = formatTime(daily.sunset[0]);
+
+      updateBodyBg(wmo, isDay);
+
+      // 7 日預報
+      forecastList.innerHTML = '';
+      for (let i = 0; i < 7; i++) {
+        const wmoD = daily.weather_code[i];
+        const infoD = wmoInfo(wmoD, true);
+        const high = Math.round(daily.temperature_2m_max[i]);
+        const low = Math.round(daily.temperature_2m_min[i]);
+
+        const row = document.createElement('div');
+        row.className = 'forecast-row';
+        row.style.animationDelay = (i * 0.05) + 's';
+
+        // 溫度條 (相對該週範圍)
+        const allHighs = daily.temperature_2m_max.slice(0,7).map(v => Math.round(v));
+        const allLows = daily.temperature_2m_min.slice(0,7).map(v => Math.round(v));
+        const maxHigh = Math.max(...allHighs);
+        const minLow = Math.min(...allLows);
+        const range = maxHigh - minLow || 1;
+        const barLeft = ((low - minLow) / range) * 100;
+        const barWidth = ((high - low) / range) * 100;
+
+        row.innerHTML = `
+          <span class="day">${getDayName(daily.time[i], i)}</span>
+          <span class="f-icon">${infoD.icon}</span>
+          <span class="f-cond">${infoD.text}</span>
+          <div class="f-bar"><div class="fill" style="left:${barLeft}%;width:${Math.max(barWidth,8)}%"></div></div>
+          <span class="f-temps"><span class="high">${high}°</span><span class="low">${low}°</span></span>
+        `;
+        forecastList.appendChild(row);
+      }
+
+      // 更新時間
+      const nowStr = new Date().toLocaleString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+      updateTime.textContent = '最後更新：' + nowStr;
+
+      loadingState.style.display = 'none';
+      weatherContent.style.display = 'block';
+      forecastSection.style.display = 'block';
+
+    } catch (e) {
+      loadingState.style.display = 'none';
+      errorState.style.display = 'block';
+    }
+  }
+
+  // 切換地區
+  districtSelect.addEventListener('change', () => {
+    loadWeather(parseInt(districtSelect.value));
+  });
+
+  // 初始載入
+  loadWeather(0);
+
+  // 每 10 分鐘自動更新
+  setInterval(() => {
+    loadWeather(parseInt(districtSelect.value));
+  }, 600000);
+</script>
+</body>
+</html>
